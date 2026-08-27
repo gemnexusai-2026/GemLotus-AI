@@ -1,10 +1,11 @@
 ﻿"use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
 import ProductWorkspace from "./ProductWorkspace";
 
-export default function ProductsPage() {
+function ProductsPageContent() {
   const searchParams = useSearchParams();
 
   const assessmentId =
@@ -15,5 +16,13 @@ export default function ProductsPage() {
     <ProductWorkspace
       assessmentId={assessmentId}
     />
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={null}>
+      <ProductsPageContent />
+    </Suspense>
   );
 }

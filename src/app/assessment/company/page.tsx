@@ -1,10 +1,11 @@
 ﻿"use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
 import CompanyWorkspace from "./CompanyWorkspace";
 
-export default function CompanyPage() {
+function CompanyPageContent() {
   const searchParams = useSearchParams();
 
   const assessmentId =
@@ -15,5 +16,13 @@ export default function CompanyPage() {
     <CompanyWorkspace
       assessmentId={assessmentId}
     />
+  );
+}
+
+export default function CompanyPage() {
+  return (
+    <Suspense fallback={null}>
+      <CompanyPageContent />
+    </Suspense>
   );
 }

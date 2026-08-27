@@ -327,6 +327,7 @@ function normalizeFactoryProfile(
         data.updated_at,
       ) || now,
 
+      
     remarks:
       stringValue(
         data.assessment_notes,

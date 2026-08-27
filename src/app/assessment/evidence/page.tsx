@@ -1,10 +1,11 @@
 ﻿"use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
 import EvidenceWorkspace from "./EvidenceWorkspace";
 
-export default function EvidencePage() {
+function EvidencePageContent() {
   const searchParams = useSearchParams();
 
   const assessmentId =
@@ -15,5 +16,13 @@ export default function EvidencePage() {
     <EvidenceWorkspace
       assessmentId={assessmentId}
     />
+  );
+}
+
+export default function EvidencePage() {
+  return (
+    <Suspense fallback={null}>
+      <EvidencePageContent />
+    </Suspense>
   );
 }
