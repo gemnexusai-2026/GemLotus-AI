@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 
 import {
   createInitialCompany,
@@ -28,6 +28,7 @@ import CompanyDetails from "./components/CompanyDetails";
 import CompanyVerification from "./components/CompanyVerification";
 import CompanyFindings from "./components/CompanyFindings";
 import CompanyDecisionPanel from "./components/CompanyDecisionPanel";
+import { loadCompanyProfile, saveCompanyProfile } from "./actions";
 
 type CompanyWorkspaceProps = {
   assessmentId: string;
@@ -46,6 +47,62 @@ export default function CompanyWorkspace({
       ),
     );
 
+  const [isSaving, startSaving] = useTransition();
+
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadPersistedCompany() {
+      try {
+        const persisted = await loadCompanyProfile(
+          assessmentId,
+        );
+
+        if (!cancelled && persisted) {
+          setCompany(persisted);
+          setSelectedDocumentId(
+            persisted.documents[0]?.id ?? null,
+          );
+        }
+      } catch (error) {
+        console.error(
+          "COMPANY_PROFILE_LOAD_FAILED",
+          error,
+        );
+      }
+    }
+
+    loadPersistedCompany();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [assessmentId]);
+
+  useEffect(() => {
+    if (!company || company.id === "company-local") {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      startSaving(() => {
+        saveCompanyProfile(
+          assessmentId,
+          company,
+        ).catch((error) => {
+          console.error(
+            "COMPANY_PROFILE_SAVE_FAILED",
+            error,
+          );
+        });
+      });
+    }, 800);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [assessmentId, company]);
   const [filters, setFilters] =
     useState<CompanyFilterState>({
       search: "",
@@ -485,4 +542,5 @@ export default function CompanyWorkspace({
     </main>
   );
 }
+
 

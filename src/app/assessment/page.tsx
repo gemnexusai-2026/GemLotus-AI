@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { createAssessmentRepository } from "@/repositories/assessmentRepository";
@@ -238,7 +238,14 @@ const navigation = [
   ["07", "Readiness", "/assessment/readiness"],
 ];
 
-export default async function AssessmentPage() {
+export default async function AssessmentPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    organizationId?: string;
+  }>;
+}) {
+  const { organizationId } = await searchParams;
   const supabase = await createSupabaseServerClient();
 
   const {
@@ -481,6 +488,7 @@ export default async function AssessmentPage() {
                       key={path.code}
                       path={path}
                       entityTypes={entityTypes}
+                      organizationId={organizationId}
                       liveEntity={liveEntity}
                     />
                   ))}
@@ -507,6 +515,7 @@ export default async function AssessmentPage() {
                         key={path.code}
                         path={path}
                         entityTypes={entityTypes}
+                        organizationId={organizationId}
                         liveEntity={liveEntity}
                       />
                     ))}
@@ -566,18 +575,18 @@ export default async function AssessmentPage() {
                 </div>
 
                 <div className="shrink-0 rounded-full border border-emerald-300/10 bg-emerald-300/[0.035] px-4 py-2 text-[8px] font-bold uppercase tracking-[0.18em] text-emerald-200/60">
-                  ● Definition Engine Connected
+                  â— Definition Engine Connected
                 </div>
               </div>
             </section>
 
             <footer className="mt-8 flex flex-col gap-2 border-t border-white/[0.06] py-6 text-[8px] uppercase tracking-[0.2em] text-white/15 sm:flex-row sm:items-center sm:justify-between">
               <span>
-                GemLotus AI • Assessment Intelligence Platform
+                GemLotus AI â€¢ Assessment Intelligence Platform
               </span>
 
               <span>
-                Foundation v1 • Secure Assessment Workspace
+                Foundation v1 â€¢ Secure Assessment Workspace
               </span>
             </footer>
           </div>
@@ -658,6 +667,7 @@ function FrameworkHeader({
 function AssessmentPathCard({
   path,
   entityTypes,
+  organizationId,
   liveEntity,
 }: {
   path: (typeof assessmentPaths)[number];
@@ -668,6 +678,7 @@ function AssessmentPathCard({
       >["getEntityTypes"]
     >
   >;
+  organizationId?: string;
   liveEntity:
     | Awaited<
         ReturnType<
@@ -789,6 +800,7 @@ function AssessmentPathCard({
           {isLive && matchingEntity ? (
             <StartAssessmentButton
               entityTypeCode={matchingEntity.code}
+                organizationId={organizationId}
             />
           ) : (
             <span className="shrink-0 rounded-xl border border-white/[0.07] bg-white/[0.025] px-3 py-2 text-[8px] font-semibold uppercase tracking-[0.12em] text-white/25">
@@ -824,7 +836,7 @@ function EngineCard({
         </div>
 
         <span className="text-[7px] font-bold uppercase tracking-[0.18em] text-emerald-300/60">
-          ● {status}
+          â— {status}
         </span>
       </div>
 
@@ -838,3 +850,12 @@ function EngineCard({
     </div>
   );
 }
+
+
+
+
+
+
+
+
+

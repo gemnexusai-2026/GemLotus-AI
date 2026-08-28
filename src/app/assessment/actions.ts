@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { redirect } from "next/navigation";
 
@@ -233,6 +233,7 @@ export async function saveCompanyProfile(
 }
 export async function startAssessment(
   entityTypeCode: string,
+  organizationId?: string,
 ) {
   const supabase =
     await createSupabaseServerClient();
@@ -247,6 +248,25 @@ export async function startAssessment(
         "/assessment",
       )}`,
     );
+  }  
+  if (organizationId) {
+    const { data: membership, error: membershipError } =
+      await supabase
+        .from("organization_members")
+        .select("id")
+        .eq("organization_id", organizationId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+    if (membershipError) {
+      throw new Error(`ORGANIZATION_MEMBERSHIP_CHECK_FAILED:${membershipError.message}`);
+    }
+
+    if (!membership) {
+      throw new Error(
+        "ORGANIZATION_ACCESS_DENIED",
+      );
+    }
   }
 
   const normalizedCode =
@@ -323,6 +343,7 @@ export async function startAssessment(
       .from("assessment_snapshots")
       .insert({
         created_by: user.id,
+        organization_id: organizationId,
         entity_type_id: entityType.id,
 
         assessment_type:
@@ -368,3 +389,8 @@ export async function startAssessment(
     `/assessment/company?assessmentId=${assessment.id}`,
   );
 }
+
+
+
+
+

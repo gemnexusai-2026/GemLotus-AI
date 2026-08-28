@@ -1,28 +1,66 @@
-﻿"use client";
+﻿import { notFound, redirect } from "next/navigation";
 
-import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 import CompanyWorkspace from "./CompanyWorkspace";
 
-function CompanyPageContent() {
-  const searchParams = useSearchParams();
+type CompanyPageProps = {
+  searchParams: Promise<{
+    assessmentId?: string;
+  }>;
+};
 
-  const assessmentId =
-    searchParams.get("assessmentId") ??
-    "local-assessment";
+export default async function CompanyPage({
+  searchParams,
+}: CompanyPageProps) {
+  const { assessmentId } = await searchParams;
+
+  if (!assessmentId) {
+    redirect("/assessment");
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect(
+      `/login?next=${encodeURIComponent(
+        `/assessment/company?assessmentId=${assessmentId}`,
+      )}`,
+    );
+  }
+
+  const { data: assessment, error } = await supabase
+    .from("assessment_snapshots")
+    .select(
+      "id, organization_id, created_by, assessment_type, status",
+    )
+    .eq("id", assessmentId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(
+      `ASSESSMENT_ACCESS_CHECK_FAILED:${error.message}`,
+    );
+  }
+
+  if (!assessment) {
+    notFound();
+  }
+
+  if (
+    assessment.assessment_type !== "oem" &&
+    assessment.created_by !== user.id
+  ) {
+    notFound();
+  }
 
   return (
     <CompanyWorkspace
-      assessmentId={assessmentId}
+      assessmentId={assessment.id}
     />
-  );
-}
-
-export default function CompanyPage() {
-  return (
-    <Suspense fallback={null}>
-      <CompanyPageContent />
-    </Suspense>
   );
 }
