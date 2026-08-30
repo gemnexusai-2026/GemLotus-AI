@@ -1,15 +1,13 @@
 ﻿"use client";
 
 import {
-  COMPANY_RISK_LEVELS,
-  COMPANY_VALIDITY_STATUSES,
+COMPANY_VALIDITY_STATUSES,
   COMPANY_VERIFICATION_STATUSES,
 } from "../company.constants";
 
 import type {
   CompanyDocument,
-  CompanyRiskLevel,
-  CompanyValidityStatus,
+CompanyValidityStatus,
   CompanyVerificationStatus,
 } from "../company.types";
 
@@ -160,17 +158,6 @@ export default function CompanyVerification({
             })
           }
         />
-
-        <div className="min-w-0">
-          <div className="mb-2 text-[8px] font-bold uppercase tracking-[0.16em] text-white/35">
-            Document Risk
-          </div>
-
-          <RiskControl
-            value="low"
-            onChange={() => undefined}
-          />
-        </div>
 
         <div className="sm:col-span-2">
           <div className="rounded-2xl border border-white/[0.06] bg-black/[0.12] p-4">
@@ -347,36 +334,3 @@ function TextArea({
   );
 }
 
-function RiskControl({
-  value,
-  onChange,
-}: {
-  value: CompanyRiskLevel;
-  onChange: (
-    value: CompanyRiskLevel,
-  ) => void;
-}) {
-  return (
-    <select
-      value={value}
-      onChange={(event) =>
-        onChange(
-          event.target
-            .value as CompanyRiskLevel,
-        )
-      }
-      className="w-full min-w-0 rounded-xl border border-white/[0.08] bg-[#071426] px-4 py-3 text-sm text-white outline-none focus:border-cyan-300/30"
-    >
-      {COMPANY_RISK_LEVELS.map(
-        (option) => (
-          <option
-            key={option.value}
-            value={option.value}
-          >
-            {option.label}
-          </option>
-        ),
-      )}
-    </select>
-  );
-}

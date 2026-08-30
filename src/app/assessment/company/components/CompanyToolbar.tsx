@@ -46,7 +46,7 @@ type CompanyToolbarProps = {
       | "all",
   ) => void;
 
-  onAddDocument: () => void;
+  onAddDocument: (documentType: CompanyDocumentType) => void;
 };
 
 export default function CompanyToolbar({
@@ -155,13 +155,42 @@ export default function CompanyToolbar({
           />
         </div>
 
-        <button
-          type="button"
-          onClick={onAddDocument}
-          className="w-full shrink-0 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 px-5 py-3 text-[9px] font-bold uppercase tracking-[0.15em] text-[#031020] transition hover:brightness-110 xl:w-auto"
-        >
-          + Add Document
-        </button>
+        <div className="flex w-full shrink-0 gap-2 xl:w-auto">
+          <select
+            defaultValue="other"
+            id="company-document-type"
+            className="min-w-0 flex-1 rounded-xl border border-white/[0.08] bg-[#071426] px-3 py-3 text-[9px] font-bold uppercase tracking-[0.08em] text-white outline-none focus:border-cyan-300/30 xl:w-[190px] xl:flex-none"
+          >
+            {COMPANY_DOCUMENT_TYPES.map((item) => (
+              <option
+                key={item.value}
+                value={item.value}
+              >
+                {item.label}
+              </option>
+            ))}
+          </select>
+
+          <button
+            type="button"
+            onClick={() => {
+              const select =
+                document.getElementById(
+                  "company-document-type",
+                ) as HTMLSelectElement | null;
+
+              const value =
+                select?.value as CompanyDocumentType | undefined;
+
+              if (value) {
+                onAddDocument(value);
+              }
+            }}
+            className="shrink-0 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 px-5 py-3 text-[9px] font-bold uppercase tracking-[0.15em] text-[#031020] transition hover:brightness-110"
+          >
+            + Add Document
+          </button>
+        </div>
       </div>
     </section>
   );
@@ -202,3 +231,5 @@ function Select({
     </select>
   );
 }
+
+

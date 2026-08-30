@@ -1,14 +1,10 @@
 ﻿"use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 import {
   updateFactoryEvidence,
 } from "../actions";
-
-import {
-  uploadFactoryEvidence,
-} from "@/lib/assessment/factoryEvidenceStorage";
 
 import {
   FACTORY_RISK_LEVELS,
@@ -26,9 +22,7 @@ import type {
 type FactoryVerificationProps = {
   assessmentId: string;
   factoryProfileId: string;
-
   document: FactoryDocument;
-
   riskLevel: FactoryRiskLevel;
 
   onChange: (
@@ -38,6 +32,10 @@ type FactoryVerificationProps = {
   onRiskChange: (
     value: FactoryRiskLevel,
   ) => void;
+
+  onSave: () => Promise<void>;
+  isSaving: boolean;
+  saveMessage: string;
 };
 
 export default function FactoryVerification({
@@ -47,6 +45,9 @@ export default function FactoryVerification({
   riskLevel,
   onChange,
   onRiskChange,
+  onSave,
+  isSaving,
+  saveMessage,
 }: FactoryVerificationProps) {
   return (
     <section className="min-w-0 rounded-[24px] border border-white/[0.08] bg-white/[0.025]">
@@ -60,43 +61,33 @@ export default function FactoryVerification({
         </h2>
 
         <p className="mt-2 text-[10px] leading-5 text-white/30">
-          Verify authenticity, validity, current
-          applicability and factory infrastructure
-          risk for the selected evidence.
+          Verify authenticity, validity, current applicability and factory infrastructure risk for the selected evidence.
         </p>
       </div>
 
       <div className="grid gap-4 p-5 sm:grid-cols-2">
         <Select
           label="Verification Status"
-          value={
-            document.verificationStatus
-          }
+          value={document.verificationStatus}
           onChange={(value) =>
             onChange({
               verificationStatus:
                 value as FactoryVerificationStatus,
             })
           }
-          options={
-            FACTORY_VERIFICATION_STATUSES
-          }
+          options={FACTORY_VERIFICATION_STATUSES}
         />
 
         <Select
           label="Validity Status"
-          value={
-            document.validityStatus
-          }
+          value={document.validityStatus}
           onChange={(value) =>
             onChange({
               validityStatus:
                 value as FactoryValidityStatus,
             })
           }
-          options={
-            FACTORY_VALIDITY_STATUSES
-          }
+          options={FACTORY_VALIDITY_STATUSES}
         />
 
         <Select
@@ -107,16 +98,12 @@ export default function FactoryVerification({
               value as FactoryRiskLevel,
             )
           }
-          options={
-            FACTORY_RISK_LEVELS
-          }
+          options={FACTORY_RISK_LEVELS}
         />
 
         <Field
           label="Document Name"
-          value={
-            document.documentName
-          }
+          value={document.documentName}
           onChange={(value) =>
             onChange({
               documentName: value,
@@ -127,9 +114,7 @@ export default function FactoryVerification({
 
         <Field
           label="Document Number"
-          value={
-            document.documentNumber
-          }
+          value={document.documentNumber}
           onChange={(value) =>
             onChange({
               documentNumber: value,
@@ -140,9 +125,7 @@ export default function FactoryVerification({
 
         <Field
           label="Issuing Authority"
-          value={
-            document.issuingAuthority
-          }
+          value={document.issuingAuthority}
           onChange={(value) =>
             onChange({
               issuingAuthority: value,
@@ -187,13 +170,10 @@ export default function FactoryVerification({
         <Field
           label="Verification Date"
           type="date"
-          value={
-            document.verificationDate
-          }
+          value={document.verificationDate}
           onChange={(value) =>
             onChange({
-              verificationDate:
-                value,
+              verificationDate: value,
             })
           }
         />
@@ -213,10 +193,7 @@ export default function FactoryVerification({
                 </div>
 
                 <div className="mt-1 text-[9px] text-white/25">
-                  Indicates whether this
-                  document represents the
-                  currently applicable factory
-                  evidence.
+                  Indicates whether this document represents the currently applicable factory evidence.
                 </div>
               </div>
 
@@ -254,6 +231,31 @@ export default function FactoryVerification({
             placeholder="Record authenticity checks, physical verification observations and review notes..."
           />
         </div>
+
+        <div className="sm:col-span-2 rounded-2xl border border-cyan-300/10 bg-cyan-300/[0.03] p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="text-[8px] font-bold uppercase tracking-[0.16em] text-cyan-300/50">
+                Evidence Persistence
+              </div>
+
+              <div className="mt-2 text-[10px] text-white/35">
+                {saveMessage || "Changes are currently local until saved."}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              disabled={isSaving}
+              onClick={onSave}
+              className="rounded-xl border border-cyan-300/20 bg-cyan-300/[0.08] px-5 py-3 text-[9px] font-bold uppercase tracking-[0.14em] text-cyan-200 transition hover:bg-cyan-300/[0.12] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {isSaving
+                ? "Saving..."
+                : "Save Evidence"}
+            </button>
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -268,9 +270,7 @@ function Field({
 }: {
   label: string;
   value: string;
-  onChange: (
-    value: string,
-  ) => void;
+  onChange: (value: string) => void;
   placeholder?: string;
   type?: "text" | "date";
 }) {
@@ -284,9 +284,7 @@ function Field({
         type={type}
         value={value}
         onChange={(event) =>
-          onChange(
-            event.target.value,
-          )
+          onChange(event.target.value)
         }
         placeholder={placeholder}
         className="w-full min-w-0 rounded-xl border border-white/[0.08] bg-black/[0.16] px-4 py-3 text-sm text-white outline-none placeholder:text-white/20 focus:border-cyan-300/30"
@@ -303,9 +301,7 @@ function Select({
 }: {
   label: string;
   value: string;
-  onChange: (
-    value: string,
-  ) => void;
+  onChange: (value: string) => void;
   options: {
     value: string;
     label: string;
@@ -321,9 +317,7 @@ function Select({
       <select
         value={value}
         onChange={(event) =>
-          onChange(
-            event.target.value,
-          )
+          onChange(event.target.value)
         }
         className="w-full min-w-0 rounded-xl border border-white/[0.08] bg-[#071426] px-4 py-3 text-sm text-white outline-none focus:border-cyan-300/30"
       >
@@ -348,9 +342,7 @@ function TextArea({
 }: {
   label: string;
   value: string;
-  onChange: (
-    value: string,
-  ) => void;
+  onChange: (value: string) => void;
   placeholder?: string;
 }) {
   return (
@@ -362,9 +354,7 @@ function TextArea({
       <textarea
         value={value}
         onChange={(event) =>
-          onChange(
-            event.target.value,
-          )
+          onChange(event.target.value)
         }
         placeholder={placeholder}
         rows={4}
@@ -373,7 +363,3 @@ function TextArea({
     </label>
   );
 }
-
-
-
-

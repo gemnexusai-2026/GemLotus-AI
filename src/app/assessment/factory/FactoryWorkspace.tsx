@@ -381,6 +381,88 @@ export default function FactoryWorkspace({
     });
   }
 
+  const [isSavingEvidence, setIsSavingEvidence] =
+    useState(false);
+
+  const [evidenceSaveMessage, setEvidenceSaveMessage] =
+    useState("");
+
+  async function saveSelectedEvidence() {
+    if (!selectedDocument) {
+      return;
+    }
+
+    const document = selectedDocument;
+
+    if (
+      document.documentType === "other" &&
+      !document.documentName.trim() &&
+      !document.documentNumber.trim() &&
+      !document.fileName.trim() &&
+      !document.fileReference.trim()
+    ) {
+      setEvidenceSaveMessage(
+        "Complete the evidence details before saving.",
+      );
+      return;
+    }
+
+    setIsSavingEvidence(true);
+    setEvidenceSaveMessage("");
+
+    try {
+      const isPersisted =
+        document.id &&
+        !document.id.startsWith("factory-doc-");
+
+      if (isPersisted) {
+        await updateFactoryEvidence(
+          document.id,
+          document,
+        );
+
+        setEvidenceSaveMessage(
+          "Evidence updated successfully.",
+        );
+        return;
+      }
+
+      const saved =
+        await createFactoryEvidence(
+          assessmentId,
+          factory.id,
+          document,
+        );
+
+      setFactory((current) => ({
+        ...current,
+        documents:
+          current.documents.map(
+            (item) =>
+              item.id === document.id
+                ? saved
+                : item,
+          ),
+        updatedAt:
+          new Date().toISOString(),
+      }));
+
+      setSelectedDocumentId(saved.id);
+
+      setEvidenceSaveMessage(
+        "Evidence saved successfully.",
+      );
+    } catch (error) {
+      setEvidenceSaveMessage(
+        error instanceof Error
+          ? error.message
+          : "Failed to save evidence.",
+      );
+    } finally {
+      setIsSavingEvidence(false);
+    }
+  }
+
   function setSearch(
     value: string,
   ) {
@@ -580,6 +662,15 @@ export default function FactoryWorkspace({
                 onRiskChange={
                   handleRiskChange
                 }
+                onSave={
+                  saveSelectedEvidence
+                }
+                isSaving={
+                  isSavingEvidence
+                }
+                saveMessage={
+                  evidenceSaveMessage
+                }
               />
             ) : (
               <div className="rounded-[24px] border border-dashed border-white/[0.08] bg-white/[0.02] p-8 text-center">
@@ -600,6 +691,14 @@ export default function FactoryWorkspace({
     </div>
   );
 }
+
+
+
+
+
+
+
+
 
 
 

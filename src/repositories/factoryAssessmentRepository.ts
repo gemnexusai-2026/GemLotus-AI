@@ -38,6 +38,11 @@ export interface FactoryAssessmentRepository {
     evidenceId: string,
     patch: Partial<FactoryDocument>,
   ): Promise<void>;
+
+  updateMachinery(
+    assessmentId: string,
+    machinery: unknown[],
+  ): Promise<void>;
 }
 
 function numberOrNull(
@@ -416,6 +421,7 @@ export function createFactoryAssessmentRepository():
       const supabase =
         await createSupabaseServerClient();
 
+
       const { data, error } =
         await supabase
           .from(
@@ -456,6 +462,7 @@ export function createFactoryAssessmentRepository():
     ) {
       const supabase =
         await createSupabaseServerClient();
+
 
       const { data, error } =
         await supabase
@@ -617,6 +624,87 @@ export function createFactoryAssessmentRepository():
         );
       }
     },
+    async updateMachinery(
+      assessmentId,
+      machinery,
+    ) {
+      const supabase =
+        await createSupabaseServerClient();
+
+      const { data: profile, error: profileError } =
+        await supabase
+          .from(
+            "assessment_factory_profiles" as any,
+          )
+          .select("id")
+          .eq(
+            "assessment_id",
+            assessmentId,
+          )
+          .maybeSingle();
+
+      if (profileError) {
+        throw new Error(
+          `FACTORY_PROFILE_LOAD_FAILED:${profileError.message}`,
+        );
+      }
+
+      if (!profile?.id) {
+        throw new Error(
+          "FACTORY_PROFILE_NOT_FOUND",
+        );
+      }
+
+      const machineryRecords =
+        Array.isArray(machinery)
+          ? machinery
+          : [];
+
+      const owned =
+        machineryRecords.filter(
+          (machine: any) =>
+            machine?.ownership === "owned",
+        ).length;
+
+      const leased =
+        machineryRecords.filter(
+          (machine: any) =>
+            machine?.ownership === "leased",
+        ).length;
+
+      const { error } =
+        await supabase
+          .from(
+            "assessment_factory_profiles" as any,
+          )
+          .update({
+            machinery_count:
+              machineryRecords.length,
+
+            owned_machinery_count:
+              owned,
+
+            leased_machinery_count:
+              leased,
+
+            machinery_details:
+              machineryRecords,
+
+            updated_at:
+              new Date().toISOString(),
+          })
+          .eq(
+            "id",
+            profile.id,
+          );
+
+      if (error) {
+        throw new Error(
+          `MACHINERY_SAVE_FAILED:${error.message}`,
+        );
+      }
+    },
+
     async saveProfile(
       assessmentId,
       userId,
@@ -896,6 +984,11 @@ export function createFactoryAssessmentRepository():
     },
   };
 }
+
+
+
+
+
 
 
 

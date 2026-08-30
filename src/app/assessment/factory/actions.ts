@@ -261,6 +261,20 @@ createFactoryEvidence(
     );
   }
 
+  const hasEvidence =
+    Boolean(
+      document.documentName?.trim() ||
+        document.documentNumber?.trim() ||
+        document.fileName?.trim() ||
+        document.fileReference?.trim(),
+    );
+
+  if (!hasEvidence) {
+    throw new Error(
+      "FACTORY_EVIDENCE_EMPTY",
+    );
+  }
+
   const repository =
     createFactoryAssessmentRepository();
 
@@ -308,7 +322,40 @@ updateFactoryEvidence(
     success: true,
   };
 }
+export async function
+saveFactoryMachinery(
+  assessmentId: string,
+  machinery: unknown[],
+) {
+  const supabase =
+    await createSupabaseServerClient();
 
+  const {
+    data: { user },
+  } =
+    await supabase.auth.getUser();
 
+  if (!user) {
+    throw new Error(
+      "AUTHENTICATION_REQUIRED",
+    );
+  }
 
+  if (!assessmentId) {
+    throw new Error(
+      "ASSESSMENT_ID_REQUIRED",
+    );
+  }
 
+  const repository =
+    createFactoryAssessmentRepository();
+
+  await repository.updateMachinery(
+    assessmentId,
+    machinery,
+  );
+
+  return {
+    success: true,
+  };
+}

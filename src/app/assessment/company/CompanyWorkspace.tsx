@@ -16,6 +16,7 @@ import {
 
 import type {
   CompanyDocument,
+  CompanyDocumentType,
   CompanyFilterState,
   CompanyLegalProfile,
 } from "./company.types";
@@ -28,7 +29,8 @@ import CompanyDetails from "./components/CompanyDetails";
 import CompanyVerification from "./components/CompanyVerification";
 import CompanyFindings from "./components/CompanyFindings";
 import CompanyDecisionPanel from "./components/CompanyDecisionPanel";
-import { loadCompanyProfile, saveCompanyProfile } from "./actions";
+import { loadCompanyProfile, saveCompanyDocuments, saveCompanyFindings, saveCompanyProfile } from "./actions";
+import { COMPANY_DOCUMENT_TYPES } from "./company.constants";
 
 type CompanyWorkspaceProps = {
   assessmentId: string;
@@ -48,6 +50,7 @@ export default function CompanyWorkspace({
     );
 
   const [isSaving, startSaving] = useTransition();
+  const [isHydrated, setIsHydrated] = useState(false);
 
 
   useEffect(() => {
@@ -65,6 +68,10 @@ export default function CompanyWorkspace({
             persisted.documents[0]?.id ?? null,
           );
         }
+
+        if (!cancelled) {
+          setIsHydrated(true);
+        }
       } catch (error) {
         console.error(
           "COMPANY_PROFILE_LOAD_FAILED",
@@ -81,18 +88,28 @@ export default function CompanyWorkspace({
   }, [assessmentId]);
 
   useEffect(() => {
-    if (!company || company.id === "company-local") {
+    if (!isHydrated || !company || company.id === "company-local") {
       return;
     }
 
     const timer = window.setTimeout(() => {
       startSaving(() => {
-        saveCompanyProfile(
-          assessmentId,
-          company,
-        ).catch((error) => {
+        Promise.all([
+          saveCompanyProfile(
+            assessmentId,
+            company,
+          ),
+          saveCompanyDocuments(
+            assessmentId,
+            company.documents,
+          ),
+          saveCompanyFindings(
+            assessmentId,
+            company.findings,
+          ),
+        ]).catch((error) => {
           console.error(
-            "COMPANY_PROFILE_SAVE_FAILED",
+            "COMPANY_PERSISTENCE_SAVE_FAILED",
             error,
           );
         });
@@ -102,7 +119,7 @@ export default function CompanyWorkspace({
     return () => {
       window.clearTimeout(timer);
     };
-  }, [assessmentId, company]);
+  }, [assessmentId, company, isHydrated]);
   const [filters, setFilters] =
     useState<CompanyFilterState>({
       search: "",
@@ -252,7 +269,16 @@ export default function CompanyWorkspace({
               document.isMandatory &&
               document.verificationStatus ===
                 "verified" &&
-              document.isCurrent,
+              (document.validityStatus ===
+                "valid" ||
+                document.validityStatus ===
+                  "not_applicable") &&
+              document.isCurrent &&
+              Boolean(
+                document.fileName?.trim() ||
+                  document.fileReference?.trim() ||
+                  document.documentNumber?.trim(),
+              ),
           ).length,
 
         openFindings:
@@ -296,7 +322,33 @@ export default function CompanyWorkspace({
     }));
   }
 
-  function addDocument() {
+  function addDocument(
+    documentType: CompanyDocumentType,
+  ) {
+    const alreadyExists =
+      company.documents.some(
+        (document) =>
+          document.documentType ===
+          documentType,
+      );
+
+    if (alreadyExists) {
+      const existing =
+        company.documents.find(
+          (document) =>
+            document.documentType ===
+            documentType,
+        );
+
+      if (existing) {
+        setSelectedDocumentId(
+          existing.id,
+        );
+      }
+
+      return;
+    }
+
     const id =
       `company-doc-${Date.now()}-${Math.random()
         .toString(36)
@@ -306,22 +358,33 @@ export default function CompanyWorkspace({
       id,
       companyId: company.id,
 
-      documentType: "other",
-      documentName: "",
-      documentNumber: "",
+      documentType,
+      documentName:
+        COMPANY_DOCUMENT_TYPES.find(
+          (item) =>
+            item.value ===
+            documentType,
+        )?.label ?? "",
 
+      documentNumber: "",
       issuingAuthority: "",
 
       issueDate: "",
       expiryDate: "",
 
-      validityStatus: "unknown",
-      verificationStatus: "pending",
+      validityStatus:
+        "unknown",
+
+      verificationStatus:
+        "pending",
 
       fileName: "",
       fileReference: "",
 
-      isMandatory: false,
+      isMandatory:
+        documentType === "pan" ||
+        documentType === "gst" ||
+        documentType === "udyam",
       isCurrent: false,
 
       verifiedBy: "",
@@ -542,5 +605,12 @@ export default function CompanyWorkspace({
     </main>
   );
 }
+
+
+
+
+
+
+
 
 

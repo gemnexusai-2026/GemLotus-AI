@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import type { CompanyDocument } from "../company.types";
+import type { CompanyDocument, CompanyDocumentType } from "../company.types";
 
 type CompanyRegisterProps = {
   documents: CompanyDocument[];
@@ -17,7 +17,7 @@ type CompanyRegisterProps = {
     id: string,
   ) => void;
 
-  onAddDocument: () => void;
+  onAddDocument: (documentType: CompanyDocumentType) => void;
 };
 
 export default function CompanyRegister({
@@ -62,7 +62,7 @@ export default function CompanyRegister({
 
             <button
               type="button"
-              onClick={onAddDocument}
+              onClick={() => onAddDocument("other")}
               className="mt-5 rounded-xl border border-cyan-300/15 bg-cyan-300/[0.04] px-5 py-3 text-[9px] font-bold uppercase tracking-[0.14em] text-cyan-200 transition hover:bg-cyan-300/[0.08]"
             >
               + Add Document
@@ -245,3 +245,4 @@ function StatusBadge({
     </span>
   );
 }
+
